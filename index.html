@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Chat</title>
+  <!-- <link rel="stylesheet" href="style.css"> -->
+  <link href="https://use.fontawesome.com/releases/v5.0.7/css/all.css" rel="stylesheet">
+</head>
+<style>
+  
+  body{
+		background-image: url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPwB4H9fipoFLMAHDolyt37ZymjQf_cxXkotPN6woVvqTdnbqotA);
+    background-repeat: no-repeat;
+    background-size: cover;
+
+	}
+
+  html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+.title {
+	text-align: center;
+	color: white;
+  font-weight: bold;
+  font-size: 30px;
+}
+
+.form.usernameInput{
+	 
+	margin-top: 5px;
+	 width: 50% ;
+	 height: 50%;
+	 border-radius: 5px;
+	 border: 5px;
+
+}
+
+ul {
+  list-style: none;
+  word-wrap: break-word;
+}
+
+.pages {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  position: absolute;
+} 
+
+.form{
+  height: 100px;
+  margin-top: -100px;
+  position: absolute;
+  text-align: center;
+  top: 50%;
+  width: 100%;
+}
+
+.button{
+  background-color: pink;
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  border-radius: 15px;
+  border:2px;
+}
+.send{
+	border-color: #2196F3;
+	border: 1px solid black;
+  background-color: white;
+  color: black;
+  padding: 20px;
+  font-size: 16px;
+  cursor: pointer;
+  bottom: 0;
+  position: absolute;
+  right: 0;
+  width: 15%;
+
+}
+
+#messages{
+  list-style-type: none;
+    margin: 0;
+    padding: 0;
+    font-family: cursive;
+    margin-left: 15%;
+    text-align: center;
+    margin-top: 10px;
+   
+}
+#activeUsers{
+  font-style: oblique;
+  font-size: 18px ;
+  font-weight: bold;
+  color: white;
+  margin-top: 10px;
+
+}
+
+#m {
+  padding:20px; 
+  width:83%; 
+  border-radius: 5px;
+  border-color:black; 
+  background:aqua;
+  bottom: 0;
+  left: 0;
+  position: absolute;  
+}
+
+</style>
+
+<body>
+  <ul class="pages">
+    <div class="chatArea">
+
+
+      <br>
+      <center>
+        <ul id="activeUsers">Active Users</ul>
+    </div>
+    <div class="outer-border">
+      <ul id="messages">
+        <section id="feedback"></section>
+      </ul>
+      </center>
+
+
+
+      <form action="">
+        <input id='m'></input>
+
+
+        <button class="send">Send</button>
+      </form>
+    </div>
+    <!-- </li>  -->
+    <div class="form">
+      <h3 class="title">What's your username?</h3>
+      <center><input class="usernameInput" id="userName" type="text" maxlength="14" style="padding:15px" /></center>
+      <br>
+      <center> <button class="button" id="save">Save</button></center>
+    </div>
+    </div>
+  </ul>
+  <!-- </li> -->
+
+  <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+</body>
+<script>
+  var socket = io();
+  var feedback = $('#feedback');
+  var userName = $('#userName');
+  var message = $('#m');
+
+
+
+  $(".outer-border").hide();
+  $("#activeUsers").hide();
+  $(document).ready(function () {
+    $("#save").click(function () {
+      if ($("#userName").val() == '') {
+        alert("Fill up username")
+      } else {
+        $(".form").hide();
+        $(".outer-border").show();
+        socket.emit('login', $('#userName').val())
+        $("#activeUsers").show();
+      }
+    });
+
+    $('.outer-border').submit(function () {
+      socket.emit('chat message', $('#userName').val() + ": " + $('#m').val());
+      $('#m').val('');
+      return false;
+    });
+
+    socket.on('login', function (username) {
+      console.log(username);
+      $("#activeUsers").append($('<li style=" color: white;border: 2px solid black; height: 50px; width: 200px; background-color:violet"> ').text(username + " is online."));
+    })
+
+    socket.on('chat message', function (msg) {
+      let name = msg.split(":")
+      console.log(name)
+      if (name[0] === $('#userName').val()) {
+        $('#messages').append($('<li style="color:black; float:right;margin-left:50%; border-radius: 5px 20px; background-color:white;padding: 5px;margin-top:5px ">').text(msg));
+      } else {
+        $('#messages').append($('<li style="color:black;  float:left;margin-right:50%; border-radius: 5px 20px;background-color: skyblue;padding: 5px;margin-top:5px ">').text(msg));
+      }
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+
+    message.bind("keypress", () => {
+      socket.emit('typing')
+    });
+
+    //typing
+    socket.on('typing', (data) => {
+      var user = $('#userName').val()
+      feedback.html("<p><i>" + user + ' is typing....' + "</i></p>")
+    });
+  });
+</script>
+
+</html>
